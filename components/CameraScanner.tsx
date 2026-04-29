@@ -95,7 +95,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     // 🔥 posição do frame dentro do vídeo
     const cropX = (frameRect.left - videoRect.left + 10) * scaleX;
-    const cropY = (frameRect.top - videoRect.top) * scaleY;
+    const cropY = (frameRect.top - videoRect.top - 3) * scaleY;
     const cropWidth = frameRect.width * scaleX - 30;
     const cropHeight = frameRect.height * scaleY - 10;
 
