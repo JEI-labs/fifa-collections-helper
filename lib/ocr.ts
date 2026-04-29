@@ -15,14 +15,6 @@ export async function processImage(
   imageSource: string | HTMLVideoElement | HTMLCanvasElement,
 ): Promise<ParsedCode | null> {
   try {
-    const worker = await Tesseract.createWorker("eng");
-
-    await worker.setParameters({
-      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
-      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-      // user_defined_dpi: "300",
-    });
-
     const result = await Tesseract.recognize(imageSource, "eng", {
       logger: (m) => {
         if (m.status === "recognizing text") {
@@ -83,6 +75,6 @@ export function parseCodeManually(input: string): ParsedCode | null {
 }
 
 export function validateCode(fullCode: string): boolean {
-  const pattern = /^[A-Z]{3}\d{1,2}$/;
+  const pattern = /^[A-Z]{2,3}\d{1,2}$/;
   return pattern.test(fullCode);
 }
