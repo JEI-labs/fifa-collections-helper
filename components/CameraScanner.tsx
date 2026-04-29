@@ -85,6 +85,8 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     try {
       const result = await processImage(canvas);
 
+      console.log(result);
+
       if (result && validateCode(result.fullCode)) {
         // Avoid scanning the same code repeatedly
         if (result.fullCode === lastScannedCode) {
