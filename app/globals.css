@@ -52,8 +52,8 @@ body {
 .scan-frame::after {
   content: "";
   position: absolute;
-  top: 20px;
-  right: 16px;
+  top: 18px;
+  right: 18px;
   height: 28px;
   width: 76px;
   background: transparent;
