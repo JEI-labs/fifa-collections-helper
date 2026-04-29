@@ -94,7 +94,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     const scaleY = canvas.height / videoRect.height;
 
     // 🔥 posição do frame dentro do vídeo
-    const cropX = (frameRect.left - videoRect.left - 20) * scaleX;
+    const cropX = (frameRect.left - videoRect.left - 50) * scaleX;
     const cropY = (frameRect.top - videoRect.top + 3) * scaleY;
     const cropWidth = frameRect.width * scaleX - 30;
     const cropHeight = frameRect.height * scaleY - 10;
