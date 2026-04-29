@@ -25,12 +25,15 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualCode, setManualCode] = useState("");
+  const [debugImage, setDebugImage] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error" | "duplicate";
   } | null>(null);
+
   const [lastScannedCode, setLastScannedCode] = useState<string>("");
   const streamRef = useRef<MediaStream | null>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
 
   const startCamera = useCallback(async () => {
     try {
@@ -82,14 +85,21 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     setIsScanning(true);
 
-    // 🔥 crop da área do código (top-right)
-    const cropWidth = canvas.width * 0.4;
-    const cropHeight = canvas.height * 0.2;
+    // 🔥 pega dimensões reais na tela
+    const videoRect = video.getBoundingClientRect();
+    const frameRect = frameRef.current!.getBoundingClientRect();
 
-    const cropX = canvas.width - cropWidth;
-    const cropY = 0;
+    // 🔥 escala (tela → resolução real do vídeo)
+    const scaleX = canvas.width / videoRect.width;
+    const scaleY = canvas.height / videoRect.height;
 
-    // cria canvas auxiliar
+    // 🔥 posição do frame dentro do vídeo
+    const cropX = (frameRect.left - videoRect.left - 16) * scaleX;
+    const cropY = (frameRect.top - videoRect.top + 3) * scaleY;
+    const cropWidth = frameRect.width * scaleX - 30;
+    const cropHeight = frameRect.height * scaleY;
+
+    // 🔥 cria canvas de recorte
     const cropCanvas = document.createElement("canvas");
     cropCanvas.width = cropWidth;
     cropCanvas.height = cropHeight;
@@ -107,6 +117,9 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       cropWidth,
       cropHeight,
     );
+
+    // 🔥 DEBUG (AGORA MOSTRA O RECORTE CERTO)
+    setDebugImage(cropCanvas.toDataURL());
 
     try {
       const result = await processImage(cropCanvas);
@@ -232,7 +245,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     const { isDuplicate } = await checkRes.json();
     // Save to database
-    const saveRes = await fetch("/api/stickers", {
+    await fetch("/api/stickers", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -286,6 +299,12 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       {/* Scan Frame Overlay */}
       <div className="scan-frame">
         <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-20 h-1 bg-secondary rounded-full animate-pulse" />
+        <div className="h-full relative">
+          <div
+            ref={frameRef}
+            className="h-8 w-20 border-2 border-secondary border-dashed absolute top-[18px] right-[18px] rounded-full"
+          />
+        </div>
       </div>
 
       {/* Instructions */}
@@ -373,6 +392,13 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
         </div>
+      )}
+
+      {debugImage && (
+        <img
+          src={debugImage}
+          className="absolute top-20 left-4 w-32 border border-red-500 z-50"
+        />
       )}
     </div>
   );

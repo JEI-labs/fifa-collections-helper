@@ -49,19 +49,6 @@ body {
   animation: scan-line 2s ease-in-out infinite;
 }
 
-.scan-frame::after {
-  content: "";
-  position: absolute;
-  top: 18px;
-  right: 22px;
-  height: 28px;
-  width: 76px;
-  background: transparent;
-  border: 2px dashed var(--accent);
-  border-radius: 16px;
-  animation: opacity-pulse 1s ease-in-out infinite;
-}
-
 @keyframes opacity-pulse {
   0%,
   100% {
