@@ -246,7 +246,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   };
 
   return (
-    <div className="relative h-full min-h-screen bg-background">
+    <div className="relative h-[100dvh] overflow-hidden bg-background">
       {/* Video Feed */}
       <video
         ref={videoRef}
@@ -295,19 +295,17 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         </div>
       )}
 
-      {/* Manual Input Toggle */}
-      <div className="absolute bottom-24 left-0 right-0 text-center">
-        <button
-          onClick={() => setShowManualInput(!showManualInput)}
-          className="px-6 py-2 bg-card/80 backdrop-blur text-white rounded-full text-sm hover:bg-card transition-colors"
-        >
-          {showManualInput ? "Fechar" : "Digitar código manualmente"}
-        </button>
-      </div>
+      <div className="absolute bottom-28 left-0 right-0 flex flex-col items-center gap-3 px-4 pb-safe">
+        {!showManualInput && (
+          <button
+            onClick={() => setShowManualInput(!showManualInput)}
+            className="px-6 py-2 bg-card/80 backdrop-blur text-white rounded-full text-sm hover:bg-card transition-colors"
+          >
+            {showManualInput ? "Fechar" : "Digitar código manualmente"}
+          </button>
+        )}
 
-      {/* Manual Input Form */}
-      {showManualInput && (
-        <div className="absolute bottom-36 left-4 right-4">
+        {showManualInput && (
           <form
             onSubmit={(data) => handleManualSubmit(data)}
             className="flex gap-2"
@@ -327,8 +325,8 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
               Salvar
             </button>
           </form>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Toast Notification */}
       {toast && (
