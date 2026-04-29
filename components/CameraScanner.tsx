@@ -97,7 +97,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     const cropX = (frameRect.left - videoRect.left - 20) * scaleX;
     const cropY = (frameRect.top - videoRect.top + 3) * scaleY;
     const cropWidth = frameRect.width * scaleX - 30;
-    const cropHeight = frameRect.height * scaleY;
+    const cropHeight = frameRect.height * scaleY - 10;
 
     // 🔥 cria canvas de recorte
     const cropCanvas = document.createElement("canvas");
