@@ -18,9 +18,9 @@ export async function processImage(
     const worker = await Tesseract.createWorker("eng");
 
     await worker.setParameters({
-      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_WORD,
+      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
       tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-      user_defined_dpi: "300",
+      // user_defined_dpi: "300",
     });
 
     const result = await Tesseract.recognize(imageSource, "eng", {
