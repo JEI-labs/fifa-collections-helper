@@ -1,9 +1,35 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Lazy initialization to avoid build errors
+let supabaseClient: SupabaseClient | null = null;
+
+function getSupabaseClient(): SupabaseClient {
+  if (!supabaseClient) {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      // Return a mock client for build time
+      console.warn("Supabase credentials not configured. Using mock client.");
+      supabaseClient = createClient(
+        "https://placeholder.supabase.co",
+        "placeholder",
+      );
+    } else {
+      supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    }
+  }
+  return supabaseClient;
+}
+
+export const supabase = {
+  get client() {
+    return getSupabaseClient();
+  },
+  from(table: string) {
+    return getSupabaseClient().from(table);
+  },
+};
 
 export async function checkDuplicate(fullCode: string): Promise<boolean> {
   const { data, error } = await supabase
