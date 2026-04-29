@@ -98,3 +98,5 @@ export const TEAMS: Record<string, TeamInfo> = {
   PAR: { code: "PAR", name: "Paraguai", flag: "🇵🇾" },
   VEN: { code: "VEN", name: "Venezuela", flag: "🇻🇪" },
 };
+
+export type NextContextRequest = { params: Promise<Record<string, string>> };

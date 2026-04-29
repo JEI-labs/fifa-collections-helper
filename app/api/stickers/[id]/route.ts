@@ -1,20 +1,28 @@
 import { createSupabaseServer } from "@/lib/supabase";
+import { handleApiRequest, NextContextRequest } from "@/lib/utils";
+import { NextRequest } from "next/server";
 
-export async function DELETE(
-  req: Request,
-  context: { params: { id: string } },
-) {
-  const { id } = await context.params;
+export const DELETE = handleApiRequest<{ success: boolean; error?: string }>(
+  async (req: NextRequest, context?: NextContextRequest) => {
+    const params = await context?.params;
+    const id = params?.id;
 
-  console.log("Deleting sticker with id:", id);
+    console.log("Deleting sticker with id:", id);
 
-  const supabase = createSupabaseServer();
+    const supabase = createSupabaseServer();
 
-  const { error } = await supabase.from("stickers").delete().eq("id", id);
+    const { error } = await supabase.from("stickers").delete().eq("id", id);
 
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
+    if (error) {
+      return {
+        status: 500,
+        body: { success: false, error: error.message },
+      };
+    }
 
-  return Response.json({ success: true });
-}
+    return {
+      status: 200,
+      body: { success: true },
+    };
+  },
+);
