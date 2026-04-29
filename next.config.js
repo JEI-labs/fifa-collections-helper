@@ -4,6 +4,7 @@ const nextConfig = {
   images: {
     domains: ["flagcdn.com"],
   },
+  allowedDevOrigins: ["192.168.3.51"],
 };
 
 module.exports = nextConfig;
