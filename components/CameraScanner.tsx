@@ -82,10 +82,34 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     setIsScanning(true);
 
-    try {
-      const result = await processImage(canvas);
+    // 🔥 crop da área do código (top-right)
+    const cropWidth = canvas.width * 0.4;
+    const cropHeight = canvas.height * 0.2;
 
-      console.log(result);
+    const cropX = canvas.width - cropWidth;
+    const cropY = 0;
+
+    // cria canvas auxiliar
+    const cropCanvas = document.createElement("canvas");
+    cropCanvas.width = cropWidth;
+    cropCanvas.height = cropHeight;
+
+    const cropCtx = cropCanvas.getContext("2d");
+
+    cropCtx?.drawImage(
+      canvas,
+      cropX,
+      cropY,
+      cropWidth,
+      cropHeight,
+      0,
+      0,
+      cropWidth,
+      cropHeight,
+    );
+
+    try {
+      const result = await processImage(cropCanvas);
 
       if (result && validateCode(result.fullCode)) {
         // Avoid scanning the same code repeatedly

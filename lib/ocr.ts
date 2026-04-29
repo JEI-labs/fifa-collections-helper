@@ -15,6 +15,14 @@ export async function processImage(
   imageSource: string | HTMLVideoElement | HTMLCanvasElement,
 ): Promise<ParsedCode | null> {
   try {
+    const worker = await Tesseract.createWorker("eng");
+
+    await worker.setParameters({
+      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_WORD,
+      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+      user_defined_dpi: "300",
+    });
+
     const result = await Tesseract.recognize(imageSource, "eng", {
       logger: (m) => {
         if (m.status === "recognizing text") {
