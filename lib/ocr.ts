@@ -83,6 +83,6 @@ export function parseCodeManually(input: string): ParsedCode | null {
 }
 
 export function validateCode(fullCode: string): boolean {
-  const pattern = /^[A-Z]{2,3}\d{1,2}$/;
+  const pattern = /^[A-Z]{3}\d{1,2}$/;
   return pattern.test(fullCode);
 }
