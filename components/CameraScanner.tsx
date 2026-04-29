@@ -1,12 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { processImage, parseCodeManually, validateCode, ParsedCode } from '@/lib/ocr';
-import { checkDuplicate, saveSticker } from '@/lib/supabase';
-import { TEAMS } from '@/types';
+import { useState, useRef, useEffect, useCallback, SubmitEvent } from "react";
+import {
+  processImage,
+  parseCodeManually,
+  validateCode,
+  ParsedCode,
+} from "@/lib/ocr";
+import { TEAMS } from "@/types";
 
 interface CameraScannerProps {
-  onScan?: (result: { code: string; number: number; isDuplicate: boolean }) => void;
+  onScan?: (result: {
+    code: string;
+    number: number;
+    isDuplicate: boolean;
+  }) => void;
 }
 
 export default function CameraScanner({ onScan }: CameraScannerProps) {
@@ -16,29 +24,36 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   const [scanResult, setScanResult] = useState<ParsedCode | null>(null);
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
-  const [manualCode, setManualCode] = useState('');
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'duplicate' } | null>(null);
-  const [lastScannedCode, setLastScannedCode] = useState<string>('');
+  const [manualCode, setManualCode] = useState("");
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "duplicate";
+  } | null>(null);
+  const [lastScannedCode, setLastScannedCode] = useState<string>("");
   const streamRef = useRef<MediaStream | null>(null);
 
   const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: {
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
       });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setToast({ message: 'Erro ao acessar câmera', type: 'error' });
+      console.error("Error accessing camera:", err);
+      setToast({ message: "Erro ao acessar câmera", type: "error" });
     }
   }, []);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
   }, []);
@@ -53,7 +68,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
     if (!ctx || video.readyState !== 4) return;
 
@@ -65,7 +80,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     try {
       const result = await processImage(canvas);
-      
+
       if (result && validateCode(result.fullCode)) {
         // Avoid scanning the same code repeatedly
         if (result.fullCode === lastScannedCode) {
@@ -74,13 +89,39 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         }
 
         setScanResult(result);
-        
+
         // Check for duplicate
-        const isDup = await checkDuplicate(result.fullCode);
-        setIsDuplicate(isDup);
+        const checkRes = await fetch("/api/stickers/check", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ fullCode: result.fullCode }),
+        });
+
+        if (!checkRes.ok) {
+          throw new Error("Failed to check duplicate");
+        }
+        const { isDuplicate } = await checkRes.json();
+        setIsDuplicate(isDuplicate);
 
         // Save to database
-        await saveSticker(result.code, result.number, result.fullCode, isDup);
+        const saveRes = await fetch("/api/stickers", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            code: result.code,
+            number: result.number,
+            fullCode: result.fullCode,
+            isDuplicate,
+          }),
+        });
+
+        if (!saveRes.ok) {
+          throw new Error("Failed to save sticker");
+        }
 
         // Update last scanned code
         setLastScannedCode(result.fullCode);
@@ -88,30 +129,34 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         // Show toast
         const team = TEAMS[result.code];
         const teamName = team?.name || result.code;
-        
-        if (isDup) {
-          setToast({ 
-            message: `⚠️ ${teamName} #${result.number} - REPETIDA!`, 
-            type: 'duplicate' 
+
+        if (isDuplicate) {
+          setToast({
+            message: `⚠️ ${teamName} #${result.number} - REPETIDA!`,
+            type: "duplicate",
           });
         } else {
-          setToast({ 
-            message: `✅ ${teamName} #${result.number} salva!`, 
-            type: 'success' 
+          setToast({
+            message: `✅ ${teamName} #${result.number} salva!`,
+            type: "success",
           });
         }
 
         // Notify parent
-        onScan?.({ code: result.code, number: result.number, isDuplicate: isDup });
+        onScan?.({
+          code: result.code,
+          number: result.number,
+          isDuplicate: isDuplicate,
+        });
 
         // Clear result after delay
         setTimeout(() => {
           setScanResult(null);
-          setLastScannedCode('');
+          setLastScannedCode("");
         }, 2000);
       }
     } catch (err) {
-      console.error('Scan error:', err);
+      console.error("Scan error:", err);
     } finally {
       setIsScanning(false);
     }
@@ -128,36 +173,70 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     return () => clearInterval(interval);
   }, [captureAndProcess, showManualInput]);
 
-  const handleManualSubmit = async (e: React.FormEvent) => {
+  const handleManualSubmit = async (
+    e: SubmitEvent<HTMLFormElement>,
+  ): Promise<void> => {
     e.preventDefault();
-    
+
     const result = parseCodeManually(manualCode);
     if (!result) {
-      setToast({ message: 'Código inválido. Use formato: BRA12', type: 'error' });
+      setToast({
+        message: "Código inválido. Use formato: BRA12",
+        type: "error",
+      });
       return;
     }
 
-    const isDup = await checkDuplicate(result.fullCode);
-    await saveSticker(result.code, result.number, result.fullCode, isDup);
+    // Check for duplicate
+    const checkRes = await fetch("/api/stickers/check", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ fullCode: result.fullCode }),
+    });
+
+    if (!checkRes.ok) {
+      throw new Error("Failed to check duplicate");
+    }
+
+    const { isDuplicate } = await checkRes.json();
+    // Save to database
+    const saveRes = await fetch("/api/stickers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        code: result.code,
+        number: result.number,
+        fullCode: result.fullCode,
+        isDuplicate,
+      }),
+    });
 
     const team = TEAMS[result.code];
     const teamName = team?.name || result.code;
 
-    if (isDup) {
-      setToast({ 
-        message: `⚠️ ${teamName} #${result.number} - REPETIDA!`, 
-        type: 'duplicate' 
+    if (isDuplicate) {
+      setToast({
+        message: `⚠️ ${teamName} #${result.number} - REPETIDA!`,
+        type: "duplicate",
       });
     } else {
-      setToast({ 
-        message: `✅ ${teamName} #${result.number} salva!`, 
-        type: 'success' 
+      setToast({
+        message: `✅ ${teamName} #${result.number} salva!`,
+        type: "success",
       });
     }
 
-    setManualCode('');
+    setManualCode("");
     setShowManualInput(false);
-    onScan?.({ code: result.code, number: result.number, isDuplicate: isDup });
+    onScan?.({
+      code: result.code,
+      number: result.number,
+      isDuplicate: isDuplicate,
+    });
   };
 
   return (
@@ -191,15 +270,21 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
       {/* Scan Result Display */}
       {scanResult && (
-        <div className={`absolute bottom-32 left-4 right-4 p-4 rounded-xl text-center ${
-          isDuplicate ? 'bg-accent/90 animate-shake' : 'bg-green-600/90 animate-pulse-success'
-        }`}>
+        <div
+          className={`absolute bottom-32 left-4 right-4 p-4 rounded-xl text-center ${
+            isDuplicate
+              ? "bg-accent/90 animate-shake"
+              : "bg-green-600/90 animate-pulse-success"
+          }`}
+        >
           <div className="text-2xl font-bold font-mono">
             {scanResult.code}
             <span className="text-white">{scanResult.number}</span>
           </div>
           <div className="text-sm mt-1">
-            {isDuplicate ? '⚠️ FIGURINHA REPETIDA!' : '✅ Nova figurinha salva!'}
+            {isDuplicate
+              ? "⚠️ FIGURINHA REPETIDA!"
+              : "✅ Nova figurinha salva!"}
           </div>
         </div>
       )}
@@ -210,14 +295,17 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
           onClick={() => setShowManualInput(!showManualInput)}
           className="px-6 py-2 bg-card/80 backdrop-blur text-white rounded-full text-sm hover:bg-card transition-colors"
         >
-          {showManualInput ? 'Fechar' : 'Digitar código manualmente'}
+          {showManualInput ? "Fechar" : "Digitar código manualmente"}
         </button>
       </div>
 
       {/* Manual Input Form */}
       {showManualInput && (
         <div className="absolute bottom-36 left-4 right-4">
-          <form onSubmit={handleManualSubmit} className="flex gap-2">
+          <form
+            onSubmit={(data) => handleManualSubmit(data)}
+            className="flex gap-2"
+          >
             <input
               type="text"
               value={manualCode}
@@ -240,8 +328,11 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       {toast && (
         <div
           className={`fixed top-4 left-4 right-4 p-4 rounded-xl text-center z-50 ${
-            toast.type === 'success' ? 'bg-green-600' :
-            toast.type === 'duplicate' ? 'bg-accent' : 'bg-red-600'
+            toast.type === "success"
+              ? "bg-green-600"
+              : toast.type === "duplicate"
+                ? "bg-accent"
+                : "bg-red-600"
           }`}
           onClick={() => setToast(null)}
         >
