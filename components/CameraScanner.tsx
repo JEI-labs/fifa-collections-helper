@@ -122,7 +122,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     setDebugImage(cropCanvas.toDataURL());
 
     try {
-      const result = await processImage(cropCanvas);
+      const result = await processImage(canvas);
 
       if (result && validateCode(result.fullCode)) {
         // Avoid scanning the same code repeatedly
