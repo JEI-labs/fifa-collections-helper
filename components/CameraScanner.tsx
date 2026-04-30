@@ -388,9 +388,9 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         <p className="text-white text-lg font-bold drop-shadow-lg">
           Aponte para o código na parte de trás da figurinha
         </p>
-        <p className="text-slate-300 text-xs mt-2 drop-shadow text-">
+        {/* <p className="text-slate-300 text-xs mt-2 drop-shadow">
           Exemplo: BRA12, ARG10, FRA7
-        </p>
+        </p> */}
       </div>
 
       {/* Video Feed */}
