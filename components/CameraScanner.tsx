@@ -106,6 +106,25 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     const cropCtx = cropCanvas.getContext("2d");
 
+    if (!cropCtx) return setIsScanning(false);
+
+    // 🔥 aplica filtros para melhorar OCR
+    cropCtx.filter = "grayscale(1) contrast(3) brightness(1.5)";
+
+    const imageData = cropCtx.getImageData(0, 0, cropWidth, cropHeight);
+    const data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      const val = avg > 140 ? 255 : 0;
+
+      data[i] = val;
+      data[i + 1] = val;
+      data[i + 2] = val;
+    }
+
+    cropCtx.putImageData(imageData, 0, 0);
+
     cropCtx?.drawImage(
       canvas,
       cropX,
