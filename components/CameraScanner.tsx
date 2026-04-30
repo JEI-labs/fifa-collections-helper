@@ -310,16 +310,16 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     });
   };
 
-  // Auto-scan every 2 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!showManualInput) {
-        captureAndProcess();
-      }
-    }, 2000);
+  // // Auto-scan every 2 seconds
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     if (!showManualInput) {
+  //       captureAndProcess();
+  //     }
+  //   }, 2000);
 
-    return () => clearInterval(interval);
-  }, [captureAndProcess, showManualInput]);
+  //   return () => clearInterval(interval);
+  // }, [captureAndProcess, showManualInput]);
 
   useEffect(() => {
     if (toast) {
@@ -361,6 +361,15 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
             className="h-8 w-20 border-2 border-secondary border-dashed absolute top-[18px] right-[18px] rounded-full"
           />
         </div>
+
+        {/* Floating Scan Button */}
+        <button
+          onClick={captureAndProcess}
+          disabled={isScanning}
+          className="fixed -bottom-10 left-1/2 -translate-x-1/2 z-50 w-16 h-16 rounded-full bg-secondary text-black shadow-lg flex items-center justify-center text-xl font-bold active:scale-95 transition"
+        >
+          {isScanning ? "..." : "📸"}
+        </button>
       </div>
 
       {/* Instructions */}
