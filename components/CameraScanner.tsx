@@ -20,7 +20,6 @@ interface CameraScannerProps {
 export default function CameraScanner({ onScan }: CameraScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ParsedCode | null>(null);
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
@@ -30,7 +29,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     message: string;
     type: "success" | "error" | "duplicate";
   } | null>(null);
-
+  const scanningRef = useRef(false);
   const [lastScannedCode, setLastScannedCode] = useState<string>("");
   const streamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -71,7 +70,9 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   }, [startCamera, stopCamera]);
 
   const captureAndProcess = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || isScanning) return;
+    if (!videoRef.current || !canvasRef.current || scanningRef.current) return;
+
+    scanningRef.current = true;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -82,8 +83,6 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0);
-
-    setIsScanning(true);
 
     // 🔥 pega dimensões reais na tela
     const videoRect = video.getBoundingClientRect();
@@ -105,8 +104,9 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     cropCanvas.height = cropHeight;
 
     const cropCtx = cropCanvas.getContext("2d");
+    if (!cropCtx) return;
 
-    if (!cropCtx) return setIsScanning(false);
+    scanningRef.current = false;
 
     // 🔥 aplica filtro visual (IMPORTANTE: precisa redesenhar)
     cropCtx.filter = "grayscale(1) contrast(2.5) brightness(1.3)";
@@ -153,7 +153,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       if (result && validateCode(result.fullCode)) {
         // Avoid scanning the same code repeatedly
         if (result.fullCode === lastScannedCode) {
-          setIsScanning(false);
+          scanningRef.current = false;
           return;
         }
 
@@ -227,9 +227,9 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     } catch (err) {
       console.error("Scan error:", err);
     } finally {
-      setIsScanning(false);
+      scanningRef.current = false;
     }
-  }, [isScanning, lastScannedCode, onScan]);
+  }, [scanningRef, lastScannedCode, onScan]);
 
   const handleManualSubmit = async (
     e: SubmitEvent<HTMLFormElement>,
