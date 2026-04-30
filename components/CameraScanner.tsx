@@ -224,17 +224,6 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     }
   }, [isScanning, lastScannedCode, onScan]);
 
-  // Auto-scan every 2 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!showManualInput) {
-        captureAndProcess();
-      }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [captureAndProcess, showManualInput]);
-
   const handleManualSubmit = async (
     e: SubmitEvent<HTMLFormElement>,
   ): Promise<void> => {
@@ -300,6 +289,24 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       isDuplicate: isDuplicate,
     });
   };
+
+  // Auto-scan every 2 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!showManualInput) {
+        captureAndProcess();
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [captureAndProcess, showManualInput]);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-background">
