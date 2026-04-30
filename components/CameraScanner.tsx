@@ -110,7 +110,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     }
 
     // 🔥 aplica filtro visual (IMPORTANTE: precisa redesenhar)
-    cropCtx.filter = "grayscale(1) contrast(2.5) brightness(1.1)";
+    cropCtx.filter = "grayscale(1) contrast(2.5) brightness(1.3)";
     cropCtx.drawImage(
       canvas,
       cropX,
