@@ -70,7 +70,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   }, [startCamera, stopCamera]);
 
   const captureAndProcess = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || !scanningRef.current) return;
+    if (!videoRef.current || !canvasRef.current || scanningRef.current) return;
 
     scanningRef.current = true;
 
