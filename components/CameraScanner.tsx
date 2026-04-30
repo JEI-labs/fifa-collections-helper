@@ -225,7 +225,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         setTimeout(() => {
           setScanResult(null);
           setLastScannedCode("");
-        }, 800);
+        }, 2000);
       }
     } catch (err) {
       console.error("Scan error:", err);
