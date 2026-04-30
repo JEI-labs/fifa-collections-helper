@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, SubmitEvent } from "react";
-import { parseCodeManually, ParsedCode } from "@/lib/ocr";
+import { parseCodeManually, ParsedCode, processImage } from "@/lib/ocr";
 import { TEAMS } from "@/types";
 
 interface CameraScannerProps {
@@ -67,7 +67,8 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   }, [startCamera, stopCamera]);
 
   const captureAndProcess = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || isScanning) return;
+    if (!videoRef.current || !canvasRef.current) return;
+    if (isScanning || capturedImage) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -125,37 +126,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     setDebugImage(imageBase64);
 
     try {
-      const blob: Blob = await new Promise((resolve) =>
-        cropCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.9),
-      );
-
-      const formData = new FormData();
-      formData.append("file", blob, "image.jpg");
-
-      const controller = new AbortController();
-
-      // aborta após 8s
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 8000);
-
-      let res;
-
-      try {
-        res = await fetch("https://ocr-fifa-helper.onrender.com" + "/ocr", {
-          method: "POST",
-          body: formData,
-          signal: controller.signal,
-        });
-      } finally {
-        clearTimeout(timeout); // limpa o timer SEMPRE
-      }
-
-      if (!res.ok) {
-        throw new Error("Erro ao chamar OCR");
-      }
-
-      const data = await res.json();
+      const data = await processImage(cropCanvas);
 
       if (!data || !data.fullCode) {
         setIsScanning(false);
@@ -385,6 +356,16 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     }
   }, [scanResult]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!isScanning && !capturedImage) {
+        captureAndProcess();
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [captureAndProcess, isScanning, capturedImage]);
+
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-background">
       {/* Instructions */}
@@ -420,13 +401,13 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         </div>
 
         {/* Floating Scan Button */}
-        <button
+        {/* <button
           onClick={captureAndProcess}
           disabled={isScanning}
           className="fixed -bottom-10 left-1/2 -translate-x-1/2 z-50 w-16 h-16 rounded-full bg-secondary text-black shadow-lg flex items-center justify-center text-xl font-bold active:scale-95 transition"
         >
           {isScanning ? "..." : "📸"}
-        </button>
+        </button> */}
       </div>
 
       {/* Scan Result Display */}

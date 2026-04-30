@@ -1,9 +1,5 @@
 import Tesseract from "tesseract.js";
 
-// Regex pattern to match team codes like BRA12, ARG10, FRA7
-// 2-3 uppercase letters followed by 1-2 digits
-const CODE_PATTERN = /\b([A-Z]{3})\s?(\d{1,2})\b/g;
-
 export interface ParsedCode {
   code: string;
   number: number;
@@ -11,54 +7,135 @@ export interface ParsedCode {
   confidence: number;
 }
 
+const VALID_CODES = [
+  "MEX",
+  "RSA",
+  "KOR",
+  "CZE",
+  "CAN",
+  "BIH",
+  "QAT",
+  "SUI",
+  "BRA",
+  "MAR",
+  "HAI",
+  "SCO",
+  "USA",
+  "PAR",
+  "AUS",
+  "TUR",
+  "GER",
+  "CUW",
+  "CIV",
+  "ECU",
+  "NED",
+  "JPN",
+  "SWE",
+  "TUN",
+  "BEL",
+  "EGY",
+  "IRN",
+  "NZL",
+  "ESP",
+  "CPV",
+  "KSA",
+  "URU",
+  "FRA",
+  "SEN",
+  "IRQ",
+  "NOR",
+  "ARG",
+  "ALG",
+  "AUT",
+  "JOR",
+  "POR",
+  "COD",
+  "UZB",
+  "COL",
+  "ENG",
+  "CRO",
+  "GHA",
+  "PAN",
+];
+
+function normalizeText(text: string) {
+  let t = text.toUpperCase();
+
+  t = t.replace(/\s+/g, "");
+  t = t.replace(/[^A-Z0-9]/g, "");
+
+  const replacements: Record<string, string> = {
+    I: "1",
+    L: "1",
+    "|": "1",
+    "!": "1",
+    O: "0",
+    Q: "0",
+    G: "6",
+    B: "8",
+    S: "5",
+  };
+
+  for (const [k, v] of Object.entries(replacements)) {
+    t = t.replaceAll(k, v);
+  }
+
+  return t;
+}
+
+function fixCode(code: string) {
+  return VALID_CODES.find((c) => c === code) || null;
+}
+
 export async function processImage(
   imageSource: string | HTMLVideoElement | HTMLCanvasElement,
-): Promise<ParsedCode | null> {
-  try {
-    const worker = await Tesseract.createWorker("eng");
+) {
+  const worker = await Tesseract.createWorker("eng");
 
-    worker.setParameters({
-      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_WORD,
-    });
+  await worker.setParameters({
+    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+  });
 
-    const result = await worker.recognize(imageSource);
+  const result = await worker.recognize(imageSource);
 
-    let text = result.data.text;
+  const raw = result.data.text;
 
-    console.log("RAW OCR:", text);
+  console.log("🧠 RAW OCR:", raw);
 
-    text = text
-      .toUpperCase()
-      .replace(/[^A-Z0-9\s]/g, "")
-      .replace(/\s+/g, "");
+  const cleaned = normalizeText(raw);
 
-    text = text
-      .replace(/O/g, "0")
-      .replace(/I/g, "1")
-      .replace(/Z(?=\d)/g, "2");
+  console.log("🧼 CLEANED:", cleaned);
 
-    console.log("CLEANED OCR:", text);
+  // 🔥 candidatos tipo python
+  const candidates = cleaned.match(/[A-Z0-9]{4,6}/g) || [];
 
-    const matches = text.matchAll(CODE_PATTERN);
+  console.log("🔎 CANDIDATES:", candidates);
 
-    for (const match of matches) {
-      const code = match[1];
+  for (const c of candidates) {
+    // 🔥 sliding window (CRÍTICO)
+    for (let i = 0; i < c.length - 3; i++) {
+      const sub = c.slice(i, i + 5);
+
+      const match = sub.match(/^([A-Z0-9]{3})(\d{1,2})$/);
+      if (!match) continue;
+
+      const rawCode = match[1];
       const number = parseInt(match[2], 10);
 
-      return {
-        code,
-        number,
-        fullCode: `${code}${number}`,
-        confidence: result.data.confidence,
-      };
-    }
+      const fixed = fixCode(rawCode);
 
-    return null;
-  } catch (error) {
-    console.error("OCR Error:", error);
-    return null;
+      if (fixed) {
+        return {
+          code: fixed,
+          number,
+          fullCode: `${fixed}${number}`,
+          confidence: result.data.confidence,
+        };
+      }
+    }
   }
+
+  return null;
 }
 
 export function parseCodeManually(input: string): ParsedCode | null {
@@ -75,9 +152,4 @@ export function parseCodeManually(input: string): ParsedCode | null {
   }
 
   return null;
-}
-
-export function validateCode(fullCode: string): boolean {
-  const pattern = CODE_PATTERN;
-  return pattern.test(fullCode);
 }
