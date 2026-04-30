@@ -308,6 +308,13 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     }
   }, [toast]);
 
+  useEffect(() => {
+    if (scanResult) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [scanResult]);
+
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-background">
       {/* Video Feed */}
