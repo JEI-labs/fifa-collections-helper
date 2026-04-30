@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Sticker, TEAMS } from '@/types';
+import { Sticker, TEAMS } from "@/types";
 
 interface StickerCardProps {
   sticker: Sticker;
@@ -9,29 +9,31 @@ interface StickerCardProps {
 
 export default function StickerCard({ sticker, onDelete }: StickerCardProps) {
   const team = TEAMS[sticker.code];
-  const flag = team?.flag || '🏳️';
+  const flag = team?.flag || "🏳️";
   const teamName = team?.name || sticker.code;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   return (
     <div
-      className={`sticker-card bg-card rounded-xl p-4 relative overflow-hidden fade-in-up ${
-        sticker.is_duplicate ? 'border-2 border-accent' : 'border-2 border-transparent'
+      className={`sticker-card bg-card rounded-xl p-4 relative fade-in-up ${
+        sticker.is_duplicate
+          ? "border-2 border-accent"
+          : "border-2 border-transparent"
       }`}
     >
       {/* Duplicate Badge */}
       {sticker.is_duplicate && (
-        <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded-full">
+        <div className="absolute -top-3 bg-accent text-white text-[8px] font-semibold px-2 py-1 rounded-full">
           REPETIDA
         </div>
       )}
