@@ -106,8 +106,6 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       return;
     }
 
-    // 🔥 aplica filtro visual (IMPORTANTE: precisa redesenhar)
-    cropCtx.filter = "grayscale(1) contrast(2.5) brightness(1.3)";
     cropCtx.drawImage(
       canvas,
       cropX,
@@ -119,28 +117,6 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       cropWidth,
       cropHeight,
     );
-
-    const imageData = cropCtx.getImageData(0, 0, cropWidth, cropHeight);
-    const data = imageData.data;
-
-    // calcula média global
-    let sum = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
-    }
-    const avgGlobal = sum / (data.length / 4);
-
-    // threshold dinâmico
-    for (let i = 0; i < data.length; i += 4) {
-      const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-      const val = avg > avgGlobal ? 255 : 0;
-
-      data[i] = val;
-      data[i + 1] = val;
-      data[i + 2] = val;
-    }
-
-    cropCtx.putImageData(imageData, 0, 0);
 
     // 🔥 DEBUG (AGORA MOSTRA O RECORTE CERTO)
     setDebugImage(cropCanvas.toDataURL());
