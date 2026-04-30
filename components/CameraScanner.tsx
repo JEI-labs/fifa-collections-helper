@@ -29,7 +29,6 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   const [lastScannedCode, setLastScannedCode] = useState<string>("");
   const streamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<HTMLDivElement>(null);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   const startCamera = useCallback(async () => {
     try {
@@ -61,14 +60,8 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     }
   }, []);
 
-  useEffect(() => {
-    startCamera();
-    return () => stopCamera();
-  }, [startCamera, stopCamera]);
-
   const captureAndProcess = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    if (isScanning || capturedImage) return;
+    if (!videoRef.current || !canvasRef.current || isScanning) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -122,7 +115,6 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     const imageBase64 = cropCanvas.toDataURL();
 
-    setCapturedImage(imageBase64);
     setDebugImage(imageBase64);
 
     try {
@@ -215,7 +207,6 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       console.error("Scan error:", err);
     } finally {
       setIsScanning(false);
-      setCapturedImage(null);
     }
   }, [isScanning, lastScannedCode, onScan]);
 
@@ -285,17 +276,21 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     });
   };
 
-  const updatePreview = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current || capturedImage) return;
+  const updateFramePreview = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
-    if (!ctx || video.readyState !== 4) return;
+    if (!ctx || video.readyState !== 4) {
+      requestAnimationFrame(updateFramePreview);
+      return;
+    }
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+
     ctx.drawImage(video, 0, 0);
 
     const videoRect = video.getBoundingClientRect();
@@ -329,15 +324,20 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     );
 
     setDebugImage(cropCanvas.toDataURL());
+
+    // 🔥 loop contínuo
+    requestAnimationFrame(updateFramePreview);
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      updatePreview();
-    }, 300); // 🔥 suave e leve
+    const id = requestAnimationFrame(updateFramePreview);
+    return () => cancelAnimationFrame(id);
+  }, [updateFramePreview]);
 
-    return () => clearInterval(interval);
-  }, [updatePreview]);
+  useEffect(() => {
+    startCamera();
+    return () => stopCamera();
+  }, [startCamera, stopCamera]);
 
   useEffect(() => {
     if (toast) {
@@ -358,13 +358,13 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!isScanning && !capturedImage) {
+      if (!isScanning) {
         captureAndProcess();
       }
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [captureAndProcess, isScanning, capturedImage]);
+  }, [captureAndProcess, isScanning]);
 
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-background">
@@ -373,9 +373,6 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         <p className="text-white text-lg font-bold drop-shadow-lg">
           Aponte para o código na parte de trás da figurinha
         </p>
-        {/* <p className="text-slate-300 text-xs mt-2 drop-shadow">
-          Exemplo: BRA12, ARG10, FRA7
-        </p> */}
       </div>
 
       {/* Video Feed */}
@@ -399,15 +396,6 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
             className="h-8 w-20 border-2 border-secondary border-dashed absolute top-[18px] right-[18px] rounded-full"
           />
         </div>
-
-        {/* Floating Scan Button */}
-        {/* <button
-          onClick={captureAndProcess}
-          disabled={isScanning}
-          className="fixed -bottom-10 left-1/2 -translate-x-1/2 z-50 w-16 h-16 rounded-full bg-secondary text-black shadow-lg flex items-center justify-center text-xl font-bold active:scale-95 transition"
-        >
-          {isScanning ? "..." : "📸"}
-        </button> */}
       </div>
 
       {/* Scan Result Display */}
@@ -487,11 +475,9 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         </div>
       )}
 
-      {capturedImage && <div className="absolute inset-0 bg-black/40 z-40" />}
-
-      {(capturedImage || debugImage) && (
+      {debugImage && (
         <img
-          src={capturedImage || debugImage || undefined}
+          src={debugImage}
           className="absolute top-[13%] left-4 w-32 border rounded-md border-red-500 z-50 bg-black"
         />
       )}

@@ -8,50 +8,73 @@ export interface ParsedCode {
 }
 
 const VALID_CODES = [
+  // Grupo A
   "MEX",
   "RSA",
   "KOR",
   "CZE",
+
+  // Grupo B
   "CAN",
   "BIH",
   "QAT",
   "SUI",
+
+  // Grupo C
   "BRA",
   "MAR",
   "HAI",
   "SCO",
+
+  // Grupo D
   "USA",
   "PAR",
   "AUS",
   "TUR",
+
+  // Grupo E
   "GER",
   "CUW",
   "CIV",
   "ECU",
+
+  // Grupo F
   "NED",
   "JPN",
   "SWE",
   "TUN",
+
+  // Grupo G
   "BEL",
   "EGY",
   "IRN",
   "NZL",
+
+  // Grupo H
   "ESP",
   "CPV",
   "KSA",
   "URU",
+
+  // Grupo I
   "FRA",
   "SEN",
   "IRQ",
   "NOR",
+
+  // Grupo J
   "ARG",
   "ALG",
   "AUT",
   "JOR",
+
+  // Grupo K
   "POR",
   "COD",
   "UZB",
   "COL",
+
+  // Grupo L
   "ENG",
   "CRO",
   "GHA",
