@@ -310,16 +310,59 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     });
   };
 
-  // // Auto-scan every 2 seconds
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     if (!showManualInput) {
-  //       captureAndProcess();
-  //     }
-  //   }, 2000);
+  const updatePreview = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
 
-  //   return () => clearInterval(interval);
-  // }, [captureAndProcess, showManualInput]);
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx || video.readyState !== 4) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+
+    const videoRect = video.getBoundingClientRect();
+    const frameRect = frameRef.current!.getBoundingClientRect();
+
+    const scaleX = canvas.width / videoRect.width;
+    const scaleY = canvas.height / videoRect.height;
+
+    const cropX = (frameRect.left - videoRect.left + 10) * scaleX;
+    const cropY = (frameRect.top - videoRect.top + 5) * scaleY;
+    const cropWidth = frameRect.width * scaleX - 30;
+    const cropHeight = frameRect.height * scaleY - 10;
+
+    const cropCanvas = document.createElement("canvas");
+    cropCanvas.width = cropWidth;
+    cropCanvas.height = cropHeight;
+
+    const cropCtx = cropCanvas.getContext("2d");
+    if (!cropCtx) return;
+
+    cropCtx.drawImage(
+      canvas,
+      cropX,
+      cropY,
+      cropWidth,
+      cropHeight,
+      0,
+      0,
+      cropWidth,
+      cropHeight,
+    );
+
+    setDebugImage(cropCanvas.toDataURL());
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      updatePreview();
+    }, 300); // 🔥 suave e leve
+
+    return () => clearInterval(interval);
+  }, [updatePreview]);
 
   useEffect(() => {
     if (toast) {
