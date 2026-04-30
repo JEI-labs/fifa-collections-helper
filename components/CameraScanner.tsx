@@ -108,24 +108,8 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     if (!cropCtx) return setIsScanning(false);
 
-    // 🔥 aplica filtros para melhorar OCR
-    cropCtx.filter = "grayscale(1) contrast(3) brightness(1.5)";
-
-    const imageData = cropCtx.getImageData(0, 0, cropWidth, cropHeight);
-    const data = imageData.data;
-
-    for (let i = 0; i < data.length; i += 4) {
-      const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-      const val = avg > 140 ? 255 : 0;
-
-      data[i] = val;
-      data[i + 1] = val;
-      data[i + 2] = val;
-    }
-
-    cropCtx.putImageData(imageData, 0, 0);
-
-    cropCtx?.drawImage(
+    // 🔥 desenha primeiro
+    cropCtx.drawImage(
       canvas,
       cropX,
       cropY,
@@ -136,6 +120,26 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       cropWidth,
       cropHeight,
     );
+
+    // 🔥 aplica filtro visual (IMPORTANTE: precisa redesenhar)
+    cropCtx.filter = "grayscale(1) contrast(3) brightness(1.5)";
+    cropCtx.drawImage(cropCanvas, 0, 0);
+
+    // 🔥 agora sim pega os pixels
+    const imageData = cropCtx.getImageData(0, 0, cropWidth, cropHeight);
+    const data = imageData.data;
+
+    // 🔥 threshold
+    for (let i = 0; i < data.length; i += 4) {
+      const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      const val = avg > 140 ? 255 : 0;
+
+      data[i] = val;
+      data[i + 1] = val;
+      data[i + 2] = val;
+    }
+
+    cropCtx.putImageData(imageData, 0, 0);
 
     // 🔥 DEBUG (AGORA MOSTRA O RECORTE CERTO)
     setDebugImage(cropCanvas.toDataURL());
