@@ -310,7 +310,10 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
   useEffect(() => {
     if (scanResult) {
-      const timer = setTimeout(() => setToast(null), 3000);
+      const timer = setTimeout(() => {
+        setToast(null);
+        setScanResult(null);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [scanResult]);
