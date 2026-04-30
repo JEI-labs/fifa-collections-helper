@@ -20,6 +20,7 @@ interface CameraScannerProps {
 export default function CameraScanner({ onScan }: CameraScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ParsedCode | null>(null);
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
@@ -29,7 +30,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     message: string;
     type: "success" | "error" | "duplicate";
   } | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
+  const scanningRef = useRef(false);
   const [lastScannedCode, setLastScannedCode] = useState<string>("");
   const streamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -70,9 +71,9 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   }, [startCamera, stopCamera]);
 
   const captureAndProcess = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || isScanning) return;
+    if (!videoRef.current || !canvasRef.current || scanningRef.current) return;
 
-    setIsScanning(true);
+    scanningRef.current = true;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -104,10 +105,8 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     cropCanvas.height = cropHeight;
 
     const cropCtx = cropCanvas.getContext("2d");
-    if (!cropCtx) {
-      setIsScanning(false);
-      return;
-    }
+
+    if (!cropCtx) return;
 
     // 🔥 aplica filtro visual (IMPORTANTE: precisa redesenhar)
     cropCtx.filter = "grayscale(1) contrast(2.5) brightness(1.3)";
@@ -131,7 +130,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     for (let i = 0; i < data.length; i += 4) {
       sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
     }
-    const avgGlobal = sum / (data.length / 8);
+    const avgGlobal = sum / (data.length / 4);
 
     // threshold dinâmico
     for (let i = 0; i < data.length; i += 4) {
