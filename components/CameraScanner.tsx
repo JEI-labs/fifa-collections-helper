@@ -431,7 +431,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       )}
 
       {/* Loading Indicator */}
-      {isScanning && (
+      {scanningRef.current && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
         </div>
