@@ -2,7 +2,7 @@ import Tesseract from "tesseract.js";
 
 // Regex pattern to match team codes like BRA12, ARG10, FRA7
 // 2-3 uppercase letters followed by 1-2 digits
-const CODE_PATTERN = /\b([A-Z]{3})(\d{1,2})\b/g;
+const CODE_PATTERN = /\b([A-Z]{3})\s?(\d{1,2})\b/g;
 
 export interface ParsedCode {
   code: string;
