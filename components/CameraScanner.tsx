@@ -151,83 +151,128 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     setDebugImage(cropCanvas.toDataURL());
 
     try {
-      const result = await processImage(cropCanvas);
+      const blob: Blob = await new Promise((resolve) =>
+        cropCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.9),
+      );
 
-      if (result && validateCode(result.fullCode)) {
-        // Avoid scanning the same code repeatedly
-        if (result.fullCode === lastScannedCode) {
-          setIsScanning(false);
-          return;
-        }
+      const formData = new FormData();
+      formData.append("file", blob, "image.jpg");
 
-        setScanResult(result);
+      const controller = new AbortController();
 
-        // Check for duplicate
-        const checkRes = await fetch("/api/stickers/check", {
+      // aborta após 8s
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 8000);
+
+      let res;
+
+      try {
+        res = await fetch("https://ocr-fifa-helper.onrender.com/ocr", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ fullCode: result.fullCode }),
+          body: formData,
+          signal: controller.signal,
         });
+      } finally {
+        clearTimeout(timeout); // limpa o timer SEMPRE
+      }
 
-        if (!checkRes.ok) {
-          throw new Error("Failed to check duplicate");
-        }
-        const { isDuplicate } = await checkRes.json();
-        setIsDuplicate(isDuplicate);
+      if (!res.ok) {
+        throw new Error("Erro ao chamar OCR");
+      }
 
-        // Save to database
-        const saveRes = await fetch("/api/stickers", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            code: result.code,
-            number: result.number,
-            fullCode: result.fullCode,
-            isDuplicate,
-          }),
-        });
+      const data = await res.json();
 
-        if (!saveRes.ok) {
-          throw new Error("Failed to save sticker");
-        }
+      if (!data.codes || data.codes.length === 0) {
+        setIsScanning(false);
+        return;
+      }
 
-        // Update last scanned code
-        setLastScannedCode(result.fullCode);
+      // 🔥 pega primeiro código retornado
+      let rawCode = data.codes[0];
 
-        // Show toast
-        const team = TEAMS[result.code];
-        const teamName = team?.name || result.code;
+      // 🔥 limpa (ex: "NZL 20" → "NZL20")
+      rawCode = rawCode.replace(/\s/g, "");
 
-        if (isDuplicate) {
-          setToast({
-            message: `⚠️ ${teamName} #${result.number} - REPETIDA!`,
-            type: "duplicate",
-          });
-        } else {
-          setToast({
-            message: `✅ ${teamName} #${result.number} salva!`,
-            type: "success",
-          });
-        }
+      const match = rawCode.match(/([A-Z]{3})(\d{1,2})/);
 
-        // Notify parent
-        onScan?.({
+      if (!match) {
+        setIsScanning(false);
+        return;
+      }
+
+      const result = {
+        code: match[1],
+        number: parseInt(match[2], 10),
+        fullCode: `${match[1]}${match[2]}`,
+        confidence: 100,
+      };
+
+      // evita repetir leitura
+      if (result.fullCode === lastScannedCode) {
+        setIsScanning(false);
+        return;
+      }
+
+      setScanResult(result);
+
+      // 🔥 resto do fluxo permanece igual
+      const checkRes = await fetch("/api/stickers/check", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fullCode: result.fullCode }),
+      });
+
+      if (!checkRes.ok) {
+        throw new Error("Failed to check duplicate");
+      }
+
+      const { isDuplicate } = await checkRes.json();
+      setIsDuplicate(isDuplicate);
+
+      await fetch("/api/stickers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           code: result.code,
           number: result.number,
-          isDuplicate: isDuplicate,
-        });
+          fullCode: result.fullCode,
+          isDuplicate,
+        }),
+      });
 
-        // Clear result after delay
-        setTimeout(() => {
-          setScanResult(null);
-          setLastScannedCode("");
-        }, 2000);
+      setLastScannedCode(result.fullCode);
+
+      const team = TEAMS[result.code];
+      const teamName = team?.name || result.code;
+
+      setToast({
+        message: isDuplicate
+          ? `⚠️ ${teamName} #${result.number} - REPETIDA!`
+          : `✅ ${teamName} #${result.number} salva!`,
+        type: isDuplicate ? "duplicate" : "success",
+      });
+
+      onScan?.({
+        code: result.code,
+        number: result.number,
+        isDuplicate,
+      });
+
+      setTimeout(() => {
+        setScanResult(null);
+        setLastScannedCode("");
+      }, 2000);
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        console.warn("OCR demorou demais (timeout)");
+        return;
       }
-    } catch (err) {
+
       console.error("Scan error:", err);
     } finally {
       setIsScanning(false);
