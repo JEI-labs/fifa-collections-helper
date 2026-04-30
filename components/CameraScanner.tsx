@@ -30,7 +30,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     message: string;
     type: "success" | "error" | "duplicate";
   } | null>(null);
-  const scanningRef = useRef(false);
+
   const [lastScannedCode, setLastScannedCode] = useState<string>("");
   const streamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -71,9 +71,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   }, [startCamera, stopCamera]);
 
   const captureAndProcess = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || scanningRef.current) return;
-
-    scanningRef.current = true;
+    if (!videoRef.current || !canvasRef.current || isScanning) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -84,6 +82,8 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0);
+
+    setIsScanning(true);
 
     // 🔥 pega dimensões reais na tela
     const videoRect = video.getBoundingClientRect();
@@ -106,7 +106,10 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     const cropCtx = cropCanvas.getContext("2d");
 
-    if (!cropCtx) return;
+    if (!cropCtx) {
+      setIsScanning(false);
+      return;
+    }
 
     // 🔥 aplica filtro visual (IMPORTANTE: precisa redesenhar)
     cropCtx.filter = "grayscale(1) contrast(2.5) brightness(1.3)";
