@@ -2,7 +2,7 @@ import Tesseract from "tesseract.js";
 
 // Regex pattern to match team codes like BRA12, ARG10, FRA7
 // 2-3 uppercase letters followed by 1-2 digits
-const CODE_PATTERN = /([A-Z]{2,3})(\d{1,2})/g;
+const EXACT_PATTERN = /^[A-Z]{3}\d{1,2}$/;
 
 export interface ParsedCode {
   code: string;
@@ -27,7 +27,7 @@ export async function processImage(
     console.log("OCR Result:", text);
 
     // Find all matches of the pattern
-    const matches = text.matchAll(CODE_PATTERN);
+    const matches = text.matchAll(EXACT_PATTERN);
 
     let bestMatch: ParsedCode | null = null;
     let highestConfidence = 0;
@@ -75,6 +75,6 @@ export function parseCodeManually(input: string): ParsedCode | null {
 }
 
 export function validateCode(fullCode: string): boolean {
-  const pattern = /^[A-Z]{2,3}\d{1,2}$/;
+  const pattern = EXACT_PATTERN;
   return pattern.test(fullCode);
 }
