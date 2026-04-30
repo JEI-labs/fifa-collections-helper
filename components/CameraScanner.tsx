@@ -340,6 +340,16 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-background">
+      {/* Instructions */}
+      <div className="absolute top-8 left-4 right-4 text-center">
+        <p className="text-white text-lg font-bold drop-shadow-lg">
+          Aponte para o código na parte de trás da figurinha
+        </p>
+        <p className="text-slate-300 text-xs mt-2 drop-shadow text-">
+          Exemplo: BRA12, ARG10, FRA7
+        </p>
+      </div>
+
       {/* Video Feed */}
       <video
         ref={videoRef}
@@ -372,16 +382,6 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         </button>
       </div>
 
-      {/* Instructions */}
-      <div className="absolute top-8 left-0 right-0 text-center">
-        <p className="text-white text-lg font-medium drop-shadow-lg">
-          Aponte para o código na parte de trás da figurinha
-        </p>
-        {/* <p className="text-slate-300 text-sm mt-2 drop-shadow text-">
-          Exemplo: BRA12, ARG10, FRA7
-        </p> */}
-      </div>
-
       {/* Scan Result Display */}
       {scanResult && (
         <div
@@ -403,7 +403,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         </div>
       )}
 
-      <div className="absolute bottom-28 left-0 right-0 flex flex-col items-center gap-3 px-4 pb-safe">
+      <div className="absolute bottom-20 left-0 right-0 flex flex-col items-center gap-3 px-4 pb-safe">
         {!showManualInput && (
           <button
             onClick={() => setShowManualInput(!showManualInput)}
