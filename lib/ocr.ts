@@ -15,6 +15,13 @@ export async function processImage(
   imageSource: string | HTMLVideoElement | HTMLCanvasElement,
 ): Promise<ParsedCode | null> {
   try {
+    const worker = await Tesseract.createWorker("eng");
+
+    worker.setParameters({
+      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
+    });
+
     const result = await Tesseract.recognize(imageSource, "eng", {
       logger: (m) => {
         if (m.status === "recognizing text") {
@@ -23,35 +30,37 @@ export async function processImage(
       },
     });
 
-    const text = result.data.text;
-    console.log("OCR Result:", text);
+    let text = result.data.text;
 
-    // Find all matches of the pattern
+    console.log("RAW OCR:", text);
+
+    text = text
+      .toUpperCase()
+      .replace(/[^A-Z0-9\s]/g, "")
+      .replace(/\s+/g, "");
+
+    text = text
+      .replace(/O/g, "0")
+      .replace(/I/g, "1")
+      .replace(/Z(?=\d)/g, "2");
+
+    console.log("CLEANED OCR:", text);
+
     const matches = text.matchAll(CODE_PATTERN);
-
-    let bestMatch: ParsedCode | null = null;
-    let highestConfidence = 0;
 
     for (const match of matches) {
       const code = match[1];
       const number = parseInt(match[2], 10);
-      const fullCode = `${code}${number}`;
 
-      // Calculate confidence based on text confidence and match quality
-      const confidence = result.data.confidence;
-
-      if (confidence > highestConfidence) {
-        highestConfidence = confidence;
-        bestMatch = {
-          code,
-          number,
-          fullCode,
-          confidence,
-        };
-      }
+      return {
+        code,
+        number,
+        fullCode: `${code}${number}`,
+        confidence: result.data.confidence,
+      };
     }
 
-    return bestMatch;
+    return null;
   } catch (error) {
     console.error("OCR Error:", error);
     return null;
