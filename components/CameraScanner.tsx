@@ -104,9 +104,10 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     cropCanvas.height = cropHeight;
 
     const cropCtx = cropCanvas.getContext("2d");
-    if (!cropCtx) return;
-
-    scanningRef.current = false;
+    if (!cropCtx) {
+      scanningRef.current = false;
+      return;
+    }
 
     // 🔥 aplica filtro visual (IMPORTANTE: precisa redesenhar)
     cropCtx.filter = "grayscale(1) contrast(2.5) brightness(1)";
