@@ -229,7 +229,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     } finally {
       scanningRef.current = false;
     }
-  }, [scanningRef, lastScannedCode, onScan]);
+  }, [scanningRef.current, lastScannedCode, onScan]);
 
   const handleManualSubmit = async (
     e: SubmitEvent<HTMLFormElement>,
