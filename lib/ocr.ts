@@ -113,13 +113,32 @@ function fixCode(code: string) {
 export async function processImage(
   imageSource: string | HTMLVideoElement | HTMLCanvasElement,
 ) {
+  let inputCanvas: HTMLCanvasElement;
+
+  if (imageSource instanceof HTMLCanvasElement) {
+    inputCanvas = preprocessCanvas(imageSource);
+  } else {
+    // fallback (caso venha video ou string)
+    const tempCanvas = document.createElement("canvas");
+    const ctx = tempCanvas.getContext("2d");
+
+    if (!ctx) return null;
+
+    tempCanvas.width = 300;
+    tempCanvas.height = 150;
+
+    ctx.drawImage(imageSource as any, 0, 0);
+
+    inputCanvas = preprocessCanvas(tempCanvas);
+  }
+
   const worker = await Tesseract.createWorker("eng");
 
   await worker.setParameters({
     tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
   });
 
-  const result = await worker.recognize(imageSource);
+  const result = await worker.recognize(inputCanvas);
 
   const raw = result.data.text;
 
@@ -175,4 +194,52 @@ export function parseCodeManually(input: string): ParsedCode | null {
   }
 
   return null;
+}
+
+function preprocessCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) return source;
+
+  // 🔥 upscale (igual Python)
+  const scale = 2.5;
+  canvas.width = source.width * scale;
+  canvas.height = source.height * scale;
+
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+
+  // 🔥 grayscale + invert
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+
+    const inverted = 255 - gray;
+
+    data[i] = inverted;
+    data[i + 1] = inverted;
+    data[i + 2] = inverted;
+  }
+
+  // 🔥 threshold simples (substitui adaptive)
+  let sum = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    sum += data[i];
+  }
+
+  const avg = sum / (data.length / 4);
+
+  for (let i = 0; i < data.length; i += 4) {
+    const val = data[i] > avg ? 255 : 0;
+
+    data[i] = val;
+    data[i + 1] = val;
+    data[i + 2] = val;
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+
+  return canvas;
 }
