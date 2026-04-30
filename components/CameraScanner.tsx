@@ -130,7 +130,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     for (let i = 0; i < data.length; i += 4) {
       sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
     }
-    const avgGlobal = sum / (data.length / 4);
+    const avgGlobal = sum / (data.length / 2);
 
     // threshold dinâmico
     for (let i = 0; i < data.length; i += 4) {
