@@ -29,7 +29,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     message: string;
     type: "success" | "error" | "duplicate";
   } | null>(null);
-  const scanningRef = useRef(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [lastScannedCode, setLastScannedCode] = useState<string>("");
   const streamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -70,9 +70,9 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   }, [startCamera, stopCamera]);
 
   const captureAndProcess = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || scanningRef.current) return;
+    if (!videoRef.current || !canvasRef.current || isScanning) return;
 
-    scanningRef.current = true;
+    setIsScanning(true);
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -105,7 +105,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     const cropCtx = cropCanvas.getContext("2d");
     if (!cropCtx) {
-      scanningRef.current = false;
+      setIsScanning(false);
       return;
     }
 
@@ -154,7 +154,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       if (result && validateCode(result.fullCode)) {
         // Avoid scanning the same code repeatedly
         if (result.fullCode === lastScannedCode) {
-          scanningRef.current = false;
+          setIsScanning(false);
           return;
         }
 
@@ -228,9 +228,9 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
     } catch (err) {
       console.error("Scan error:", err);
     } finally {
-      scanningRef.current = false;
+      setIsScanning(false);
     }
-  }, [scanningRef.current, lastScannedCode, onScan]);
+  }, [isScanning, lastScannedCode, onScan]);
 
   const handleManualSubmit = async (
     e: SubmitEvent<HTMLFormElement>,
@@ -432,7 +432,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       )}
 
       {/* Loading Indicator */}
-      {scanningRef.current && (
+      {isScanning && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
         </div>
