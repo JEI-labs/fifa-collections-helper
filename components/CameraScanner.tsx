@@ -397,7 +397,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       {debugImage && (
         <img
           src={debugImage}
-          className="absolute top-[15%] left-4 w-32 border rounded-full border-dashed border-red-500 z-50"
+          className="absolute top-[12%] left-4 w-32 border rounded-full border-dashed border-red-500 z-50"
         />
       )}
     </div>
