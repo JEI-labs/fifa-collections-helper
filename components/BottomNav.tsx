@@ -5,19 +5,44 @@ import { usePathname } from "next/navigation";
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const isScannerActive = pathname === "/" || pathname === "/scanner";
+  const isMapActive = pathname === "/" || pathname === "/map";
+  const isScannerActive = pathname === "/scanner";
   const isCollectionActive = pathname === "/collection";
+
+  const base =
+    "flex flex-col items-center justify-center flex-1 h-full transition-colors";
+  const active = "text-[#FFDF00]";
+  const inactive = "text-slate-400 hover:text-slate-200";
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-slate-700 z-50">
       <div className="flex justify-around items-center h-16 max-w-md mx-auto">
+        {/* Mapa */}
+        <Link
+          href="/map"
+          className={`${base} ${isMapActive ? active : inactive}`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+            />
+          </svg>
+          <span className="text-xs mt-1 font-medium">Mapa</span>
+        </Link>
+
+        {/* Escanear */}
         <Link
           href="/scanner"
-          className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-            isScannerActive
-              ? "text-secondary"
-              : "text-slate-400 hover:text-slate-200"
-          }`}
+          className={`${base} ${isScannerActive ? active : inactive}`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -42,13 +67,10 @@ export default function BottomNav() {
           <span className="text-xs mt-1 font-medium">Escanear</span>
         </Link>
 
+        {/* Coleção */}
         <Link
           href="/collection"
-          className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-            isCollectionActive
-              ? "text-secondary"
-              : "text-slate-400 hover:text-slate-200"
-          }`}
+          className={`${base} ${isCollectionActive ? active : inactive}`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

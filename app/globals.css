@@ -156,3 +156,22 @@ body {
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+@keyframes mapLoading {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(150%); }
+  100% { transform: translateX(150%); }
+}
+
+/* Leaflet popup overrides */
+.leaflet-popup-content-wrapper {
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important;
+  padding: 0 !important;
+}
+.leaflet-popup-content {
+  margin: 16px !important;
+}
+.leaflet-popup-tip {
+  background: #fff !important;
+}
