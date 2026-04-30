@@ -95,7 +95,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
     // 🔥 posição do frame dentro do vídeo
     const cropX = (frameRect.left - videoRect.left + 10) * scaleX;
-    const cropY = (frameRect.top - videoRect.top - 10) * scaleY;
+    const cropY = (frameRect.top - videoRect.top) * scaleY;
     const cropWidth = frameRect.width * scaleX - 30;
     const cropHeight = frameRect.height * scaleY - 10;
 
@@ -397,7 +397,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       {debugImage && (
         <img
           src={debugImage}
-          className="absolute top-[10%] left-4 w-32 border rounded-full border-dashed border-red-500 z-50"
+          className="absolute top-[15%] left-4 w-32 border rounded-full border-dashed border-red-500 z-50"
         />
       )}
     </div>
