@@ -31,3 +31,5 @@ CREATE POLICY "Allow public access" ON stickers
 --   ('BRA', 10, 'BRA10', false),
 --   ('ARG', 10, 'ARG10', false),
 --   ('FRA', 10, 'FRA10', false);
+
+ALTER TABLE stickers DROP CONSTRAINT stickers_full_code_key;

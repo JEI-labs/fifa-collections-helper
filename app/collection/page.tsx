@@ -11,6 +11,8 @@ export default function CollectionPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
+  const [filter, setFilter] = useState<"all" | "unique" | "duplicates">("all");
+
   const loadStickers = async () => {
     try {
       const [stickersRes, statsRes] = await Promise.all([
@@ -61,11 +63,18 @@ export default function CollectionPage() {
 
   const filteredStickers = stickers.filter((sticker) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+
+    const matchesSearch =
       sticker.code.toLowerCase().includes(searchLower) ||
       sticker.full_code.toLowerCase().includes(searchLower) ||
-      sticker.number.toString().includes(searchLower)
-    );
+      sticker.number.toString().includes(searchLower);
+
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "duplicates" && sticker.is_duplicate) ||
+      (filter === "unique" && !sticker.is_duplicate);
+
+    return matchesSearch && matchesFilter;
   });
 
   return (
@@ -105,6 +114,39 @@ export default function CollectionPage() {
             />
           </svg>
         </div>
+      </div>
+
+      <div className="flex gap-2 my-4">
+        <button
+          onClick={() => setFilter("all")}
+          className={`px-3 py-1 rounded-full text-sm ${
+            filter === "all" ? "bg-secondary text-black" : "bg-card text-white"
+          }`}
+        >
+          Todas
+        </button>
+
+        <button
+          onClick={() => setFilter("unique")}
+          className={`px-3 py-1 rounded-full text-sm ${
+            filter === "unique"
+              ? "bg-secondary text-black"
+              : "bg-card text-white"
+          }`}
+        >
+          Únicas
+        </button>
+
+        <button
+          onClick={() => setFilter("duplicates")}
+          className={`px-3 py-1 rounded-full text-sm ${
+            filter === "duplicates"
+              ? "bg-secondary text-black"
+              : "bg-card text-white"
+          }`}
+        >
+          Repetidas
+        </button>
       </div>
 
       {/* Sticker Grid */}
