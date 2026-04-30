@@ -178,30 +178,24 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
 
       const data = await res.json();
 
-      if (!data.codes || data.codes.length === 0) {
+      if (!data || !data.fullCode) {
         setIsScanning(false);
         return;
       }
 
-      // 🔥 pega primeiro código retornado
-      let rawCode = data.codes[0];
-
-      // 🔥 limpa (ex: "NZL 20" → "NZL20")
-      rawCode = rawCode.replace(/\s/g, "");
-
-      const match = rawCode.match(/([A-Z]{3})(\d{1,2})/);
-
-      if (!match) {
-        setIsScanning(false);
-        return;
-      }
-
+      // 🔥 já vem pronto do backend
       const result = {
-        code: match[1],
-        number: parseInt(match[2], 10),
-        fullCode: `${match[1]}${match[2]}`,
-        confidence: 100,
+        code: data.code,
+        number: data.number,
+        fullCode: data.fullCode,
+        confidence: data.confidence,
       };
+
+      // valida segurança (extra)
+      if (!result.fullCode) {
+        setIsScanning(false);
+        return;
+      }
 
       // evita repetir leitura
       if (result.fullCode === lastScannedCode) {
