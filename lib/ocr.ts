@@ -19,16 +19,10 @@ export async function processImage(
 
     worker.setParameters({
       tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
+      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_WORD,
     });
 
-    const result = await Tesseract.recognize(imageSource, "eng", {
-      logger: (m) => {
-        if (m.status === "recognizing text") {
-          console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
-        }
-      },
-    });
+    const result = await worker.recognize(imageSource);
 
     let text = result.data.text;
 
