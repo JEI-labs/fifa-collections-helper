@@ -29,6 +29,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   const [lastScannedCode, setLastScannedCode] = useState<string>("");
   const streamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<HTMLDivElement>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   const startCamera = useCallback(async () => {
     try {
@@ -118,8 +119,10 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       cropHeight,
     );
 
-    // 🔥 DEBUG (AGORA MOSTRA O RECORTE CERTO)
-    setDebugImage(cropCanvas.toDataURL());
+    const imageBase64 = cropCanvas.toDataURL();
+
+    setCapturedImage(imageBase64);
+    setDebugImage(imageBase64);
 
     try {
       const blob: Blob = await new Promise((resolve) =>
@@ -241,6 +244,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       console.error("Scan error:", err);
     } finally {
       setIsScanning(false);
+      setCapturedImage(null);
     }
   }, [isScanning, lastScannedCode, onScan]);
 
@@ -311,7 +315,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
   };
 
   const updatePreview = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current || capturedImage) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -502,10 +506,12 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         </div>
       )}
 
-      {debugImage && (
+      {capturedImage && <div className="absolute inset-0 bg-black/40 z-40" />}
+
+      {(capturedImage || debugImage) && (
         <img
-          src={debugImage}
-          className="absolute top-[13%] left-4 w-32 border rounded-full border-dashed border-red-500 z-50"
+          src={capturedImage || debugImage || undefined}
+          className="absolute top-[13%] left-4 w-32 border rounded-md border-red-500 z-50 bg-black"
         />
       )}
     </div>
