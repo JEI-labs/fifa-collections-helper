@@ -12,8 +12,6 @@ interface CameraScannerProps {
   }) => void;
 }
 
-const OCR_API_URL = process.env.OCR_API_URL || "http://localhost:8000";
-
 export default function CameraScanner({ onScan }: CameraScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -165,7 +163,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       let res;
 
       try {
-        res = await fetch(OCR_API_URL + "/ocr", {
+        res = await fetch("https://ocr-fifa-helper.onrender.com" + "/ocr", {
           method: "POST",
           body: formData,
           signal: controller.signal,
