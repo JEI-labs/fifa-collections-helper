@@ -116,7 +116,7 @@ export default function CollectionPage() {
         </div>
       </div>
 
-      <div className="flex gap-2 my-4">
+      <div className="flex gap-2 mt-4 mb-6">
         <button
           onClick={() => setFilter("all")}
           className={`px-3 py-1 rounded-full text-sm ${
