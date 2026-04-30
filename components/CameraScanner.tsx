@@ -312,9 +312,9 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
         <p className="text-white text-lg font-medium drop-shadow-lg">
           Aponte para o código na parte de trás da figurinha
         </p>
-        <p className="text-slate-300 text-sm mt-2 drop-shadow">
+        {/* <p className="text-slate-300 text-sm mt-2 drop-shadow text-">
           Exemplo: BRA12, ARG10, FRA7
-        </p>
+        </p> */}
       </div>
 
       {/* Scan Result Display */}
@@ -397,7 +397,7 @@ export default function CameraScanner({ onScan }: CameraScannerProps) {
       {debugImage && (
         <img
           src={debugImage}
-          className="absolute top-[50%] left-4 w-32 border rounded-md border-red-500 z-50"
+          className="absolute top-20 left-4 w-32 border rounded-md border-red-500 z-50"
         />
       )}
     </div>
