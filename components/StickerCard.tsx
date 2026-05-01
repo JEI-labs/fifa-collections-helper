@@ -4,65 +4,102 @@ import { Sticker, TEAMS } from "@/types";
 
 interface StickerCardProps {
   sticker: Sticker;
+  count: number;
   onDelete?: (id: string) => void;
 }
 
-export default function StickerCard({ sticker, onDelete }: StickerCardProps) {
+export default function StickerCard({
+  sticker,
+  count,
+  onDelete,
+}: StickerCardProps) {
   const team = TEAMS[sticker.code];
-  const flag = team?.flag || "🏳️";
   const teamName = team?.name || sticker.code;
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const flag = team?.flag ?? "";
 
   return (
     <div
-      className={`sticker-card bg-card rounded-xl p-4 relative fade-in-up ${
-        sticker.is_duplicate
-          ? "border-2 border-accent"
-          : "border-2 border-transparent"
-      }`}
+      className={`relative sticker-card fade-in-up rounded-xl overflow-hidden select-none bg-[#4E8558] aspect-[3/4]
+      ${count > 1 ? "border-2 border-yellow-400" : ""}
+    `}
     >
-      {/* Duplicate Badge */}
-      {sticker.is_duplicate && (
-        <div className="absolute -top-3 bg-accent text-white text-[8px] font-semibold px-2 py-1 rounded-full">
-          REPETIDA
-        </div>
-      )}
-
-      {/* Flag & Code */}
-      <div className="flex items-center gap-3 mb-3">
-        <span className="text-4xl">{flag}</span>
-        <div>
-          <div className="font-mono text-2xl font-bold text-secondary">
-            {sticker.code}
-            <span className="text-white">{sticker.number}</span>
-          </div>
-          <div className="text-xs text-slate-400">{teamName}</div>
-        </div>
+      {/* FIFA World Cup trophy background */}
+      <div
+        className="absolute inset-0 pointer-events-none flex items-center justify-center"
+        style={{ opacity: 0.07 }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="" className="w-4/5 object-contain" />
       </div>
 
-      {/* Timestamp */}
-      <div className="text-xs text-slate-500">
-        {formatDate(sticker.scanned_at)}
-      </div>
-
-      {/* Delete Button */}
+      {/* Trash icon — top left */}
       {onDelete && (
         <button
           onClick={() => onDelete(sticker.id)}
-          className="mt-2 w-full py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-sm transition-colors"
+          className="absolute top-1.5 left-1.5 bg-black/25 rounded-full w-4 h-4 flex items-center justify-center hover:bg-black/45 transition-colors z-10"
         >
-          Excluir
+          <svg
+            className="w-2.5 h-2.5 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
         </button>
+      )}
+
+      {/* Sticker code — center */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <span className="text-white font-black leading-none text-2xl drop-shadow">
+          <span style={{ fontSize: "0.9em", opacity: 0.85 }}>
+            {sticker.code}
+          </span>
+          {sticker.number}
+        </span>
+      </div>
+
+      {/* Collected checkmark — top right */}
+      <div className="absolute top-1.5 right-1.5 bg-white/90 rounded-full w-4 h-4 flex items-center justify-center shadow z-10">
+        <svg
+          className="w-2.5 h-2.5 text-green-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={3.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+      </div>
+
+      {/* Country name + flag — bottom left */}
+      <div className="absolute bottom-2 left-2 right-7 flex items-center gap-0.5">
+        <span style={{ fontSize: "0.65rem" }}>{flag}</span>
+        <span
+          className="text-white font-bold tracking-wider uppercase leading-none truncate drop-shadow"
+          style={{ fontSize: "0.5rem" }}
+        >
+          {teamName}
+        </span>
+      </div>
+
+      {/* Duplicate count badge — bottom right */}
+      {count > 1 && (
+        <div
+          className="absolute bottom-0 right-0 bg-yellow-400 text-black font-black rounded-tl-lg min-w-[20px] h-5 flex items-center justify-center px-1 shadow"
+          style={{ fontSize: "0.5rem" }}
+        >
+          ×{count}
+        </div>
       )}
     </div>
   );

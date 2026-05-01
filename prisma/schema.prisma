@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Sticker {
+  id           String   @id @default(uuid()) @db.Uuid
+  code         String
+  number       Int
+  full_code    String
+  scanned_at   DateTime @default(now()) @db.Timestamptz()
+  is_duplicate Boolean  @default(false)
+
+  @@index([full_code])
+  @@index([code])
+  @@map("stickers")
+}

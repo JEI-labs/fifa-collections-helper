@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Sticker } from "@/types";
-import StickerCard from "@/components/StickerCard";
 import Stats from "@/components/Stats";
+import StickerCard from "@/components/StickerCard";
+import { Sticker } from "@/types";
+import { useEffect, useState } from "react";
+
+interface StickerGroup {
+  sticker: Sticker;
+  count: number;
+}
 
 export default function CollectionPage() {
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [stats, setStats] = useState({ total: 0, unique: 0, duplicates: 0 });
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-
   const [filter, setFilter] = useState<"all" | "unique" | "duplicates">("all");
 
   const loadStickers = async () => {
@@ -38,32 +42,41 @@ export default function CollectionPage() {
 
   useEffect(() => {
     loadStickers();
-
-    // Refresh every 5 seconds
-    const interval = setInterval(loadStickers, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/stickers/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to delete");
-      }
-
-      // Atualiza lista após delete
+      const res = await fetch(`/api/stickers/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
       loadStickers();
     } catch (err) {
       console.error("Error deleting sticker:", err);
     }
   };
 
-  const filteredStickers = stickers.filter((sticker) => {
-    const searchLower = searchTerm.toLowerCase();
+  // Group stickers by full_code (deduplicate) and count copies
+  const groupedStickers: StickerGroup[] = Object.values(
+    stickers.reduce(
+      (acc, sticker) => {
+        const key = sticker.full_code;
+        if (!acc[key]) {
+          acc[key] = { sticker, count: 1 };
+        } else {
+          acc[key].count++;
+        }
+        return acc;
+      },
+      {} as Record<string, StickerGroup>,
+    ),
+  ).sort((a, b) => {
+    if (a.sticker.code !== b.sticker.code) {
+      return a.sticker.code.localeCompare(b.sticker.code);
+    }
+    return a.sticker.number - b.sticker.number;
+  });
 
+  const filteredGroups = groupedStickers.filter(({ sticker, count }) => {
+    const searchLower = searchTerm.toLowerCase();
     const matchesSearch =
       sticker.code.toLowerCase().includes(searchLower) ||
       sticker.full_code.toLowerCase().includes(searchLower) ||
@@ -71,8 +84,8 @@ export default function CollectionPage() {
 
     const matchesFilter =
       filter === "all" ||
-      (filter === "duplicates" && sticker.is_duplicate) ||
-      (filter === "unique" && !sticker.is_duplicate);
+      (filter === "duplicates" && count > 1) ||
+      (filter === "unique" && count === 1);
 
     return matchesSearch && matchesFilter;
   });
@@ -83,7 +96,6 @@ export default function CollectionPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white mb-4">Minha Coleção</h1>
 
-        {/* Stats */}
         <Stats
           total={stats.total}
           unique={stats.unique}
@@ -125,7 +137,6 @@ export default function CollectionPage() {
         >
           Todas
         </button>
-
         <button
           onClick={() => setFilter("unique")}
           className={`px-3 py-1 rounded-full text-sm ${
@@ -136,7 +147,6 @@ export default function CollectionPage() {
         >
           Únicas
         </button>
-
         <button
           onClick={() => setFilter("duplicates")}
           className={`px-3 py-1 rounded-full text-sm ${
@@ -154,7 +164,7 @@ export default function CollectionPage() {
         <div className="flex justify-center items-center h-40">
           <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : filteredStickers.length === 0 ? (
+      ) : filteredGroups.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📦</div>
           <p className="text-slate-400 text-lg">
@@ -169,11 +179,12 @@ export default function CollectionPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {filteredStickers.map((sticker) => (
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+          {filteredGroups.map(({ sticker, count }) => (
             <StickerCard
-              key={sticker.id}
+              key={sticker.full_code}
               sticker={sticker}
+              count={count}
               onDelete={handleDelete}
             />
           ))}
